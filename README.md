@@ -17,8 +17,7 @@ Frontend da aplicação **Kaizen WPP Scheduler**, um sistema de agendamento de m
 
 ## Pré-requisitos
 
-- [Node.js](https://nodejs.org/) >= 18 (recomendado v22+)
-- npm >= 9
+- [Node.js](https://nodejs.org/) >= 18 (recomendado v22+) e npm >= 9 **ou** [Docker](https://www.docker.com/) + Docker Compose
 - API backend rodando (por padrão em `http://localhost:8080/api/v1`)
 
 ## Setup
@@ -30,13 +29,7 @@ git clone https://github.com/seu-usuario/kaizen-wpp-scheduler-frontend.git
 cd kaizen-wpp-scheduler-frontend
 ```
 
-### 2. Instalar dependências
-
-```bash
-npm install
-```
-
-### 3. Configurar variáveis de ambiente
+### 2. Configurar variáveis de ambiente
 
 Crie um arquivo `.env` na raiz do projeto a partir do exemplo:
 
@@ -52,13 +45,56 @@ VITE_API_BASE_URL=http://localhost:8080/api/v1
 
 > Se a variável não for definida, a aplicação usará `http://localhost:8080/api/v1` como padrão.
 
-### 4. Iniciar o servidor de desenvolvimento
+---
+
+### Opção A: Rodar com Docker (recomendado)
+
+Suba a aplicação com um único comando:
+
+```bash
+docker compose up -d
+```
+
+A aplicação estará disponível em `http://localhost:3000`.
+
+Para alterar a porta do host ou a URL da API, defina as variáveis no `.env`:
+
+```env
+VITE_API_BASE_URL=http://meu-backend:8080/api/v1
+APP_PORT=4000
+```
+
+Para rebuildar a imagem após alterações no código ou nas variáveis:
+
+```bash
+docker compose up -d --build
+```
+
+Para parar os containers:
+
+```bash
+docker compose down
+```
+
+> **Nota:** A variável `VITE_API_BASE_URL` é injetada em tempo de **build** (pelo Vite). Se alterá-la, é necessário rebuildar a imagem com `--build`.
+
+---
+
+### Opção B: Rodar localmente com Node.js
+
+Instale as dependências:
+
+```bash
+npm install
+```
+
+Inicie o servidor de desenvolvimento:
 
 ```bash
 npm run dev
 ```
 
-A aplicação estará disponível em `http://localhost:5173`.
+A aplicação estará disponível em `http://localhost:8080`.
 
 ## Scripts disponíveis
 
@@ -158,7 +194,43 @@ A aplicação se comunica com uma API REST backend. Os principais endpoints cons
 - `name` - Nome do contato
 - `phone` - Número de telefone (formato: `5511999999999`)
 
-## Build de produção
+## Docker
+
+A aplicação é conteinerizada com um **Dockerfile multi-stage**:
+
+1. **Build** — imagem `node:22-alpine` instala as dependências e gera o build de produção via Vite.
+2. **Serve** — imagem `nginx:alpine` serve os arquivos estáticos com configuração otimizada para SPA (fallback para `index.html`).
+
+### Variáveis de ambiente (Docker)
+
+| Variável             | Descrição                                  | Padrão                             |
+| -------------------- | ------------------------------------------ | ---------------------------------- |
+| `VITE_API_BASE_URL`  | URL base da API backend (build-time)       | `http://localhost:8080/api/v1`     |
+| `APP_PORT`           | Porta exposta no host pelo Docker Compose  | `3000`                             |
+
+### Comandos úteis
+
+```bash
+# Subir a aplicação
+docker compose up -d
+
+# Subir e forçar rebuild
+docker compose up -d --build
+
+# Ver logs
+docker compose logs -f frontend
+
+# Parar a aplicação
+docker compose down
+
+# Build manual da imagem (sem Compose)
+docker build --build-arg VITE_API_BASE_URL=http://meu-backend:8080/api/v1 -t kaizen-wpp-frontend .
+
+# Rodar a imagem manualmente
+docker run -p 3000:80 kaizen-wpp-frontend
+```
+
+## Build de produção (sem Docker)
 
 Para gerar o build otimizado para produção:
 
