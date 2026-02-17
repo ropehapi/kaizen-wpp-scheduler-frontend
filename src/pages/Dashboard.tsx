@@ -18,18 +18,20 @@ const statCards: { label: string; status: ScheduleStatus | "all"; icon: React.El
 
 export default function Dashboard() {
   const { data, isLoading, error } = useSchedulesList({ limit: 5 });
+  const { data: scheduledData } = useSchedulesList({ status: "scheduled", limit: 1 });
+  const { data: sentData } = useSchedulesList({ status: "sent", limit: 1 });
+  const { data: canceledData } = useSchedulesList({ status: "canceled", limit: 1 });
 
   if (isLoading) return <PageLoading />;
   if (error) return <ErrorState message={(error as Error).message} />;
 
   const schedules = data?.data || [];
-  const total = data?.pagination?.total || schedules.length;
 
   const counts = {
-    all: total,
-    scheduled: schedules.filter((s) => s.status === "scheduled").length,
-    sent: schedules.filter((s) => s.status === "sent").length,
-    canceled: schedules.filter((s) => s.status === "canceled").length,
+    all: data?.pagination?.total || 0,
+    scheduled: scheduledData?.pagination?.total || 0,
+    sent: sentData?.pagination?.total || 0,
+    canceled: canceledData?.pagination?.total || 0,
   };
 
   return (
